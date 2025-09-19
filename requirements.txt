@@ -1,0 +1,30 @@
+# Django and DRF
+asgiref==3.9.1
+Django==5.2.5
+djangorestframework==3.16.1
+djangorestframework_simplejwt==5.5.1
+PyJWT==2.10.1
+sqlparse==0.5.3
+
+# Database
+mysqlclient==2.2.7
+
+# CORS
+django-cors-headers==4.6.0
+
+# Rate limiting
+django-ratelimit==4.1.0
+
+# Production server
+gunicorn==23.0.0
+
+# Environment variables
+python-decouple==3.8
+
+# Timezone support
+pytz==2024.2
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+coverage==7.6.9
