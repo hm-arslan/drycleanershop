@@ -173,8 +173,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-STATIC_URL = 'static/'
+# Static configuration moved to end of file
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -219,6 +218,12 @@ CACHES = {
 RATELIMIT_ENABLE = config('RATELIMIT_ENABLE', default=True, cast=bool)
 RATELIMIT_USE_CACHE = config('RATELIMIT_USE_CACHE', default='default')
 
+# Create logs directory if it doesn't exist
+import os
+LOGS_DIR = BASE_DIR / 'logs'
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR, exist_ok=True)
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -232,49 +237,76 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'production': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
     },
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
         },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'production' if not DEBUG else 'simple',
         },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'maxBytes': 1024*1024*5,  # 5 MB
+            'filename': LOGS_DIR / 'django.log',
+            'maxBytes': 1024*1024*10,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',
         },
         'security': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'security.log',
+            'filename': LOGS_DIR / 'security.log',
             'maxBytes': 1024*1024*5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose',
             'filters': ['require_debug_false'],
         },
+        'null': {
+            'class': 'logging.NullHandler',
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
+            'handlers': ['console'] + (['file'] if not DEBUG else []),
+            'level': config('LOG_LEVEL', default='INFO'),
             'propagate': True,
         },
         'django.security': {
-            'handlers': ['security'],
+            'handlers': ['console'] + (['security'] if not DEBUG else []),
             'level': 'INFO',
             'propagate': False,
         },
         'django_ratelimit': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'] + (['file'] if not DEBUG else []),
             'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['null'] if not DEBUG else ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }
+
+# Static and Media files configuration
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Create static and media directories
+for directory in [STATIC_ROOT, MEDIA_ROOT]:
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
