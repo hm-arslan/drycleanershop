@@ -221,6 +221,8 @@ RATELIMIT_USE_CACHE = config('RATELIMIT_USE_CACHE', default='default')
 # Create logs directory if it doesn't exist
 import os
 LOGS_DIR = BASE_DIR / 'logs'
+DOCKER_BUILD = config('DOCKER_BUILD', default=False, cast=bool)
+
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR, exist_ok=True)
 
@@ -278,17 +280,17 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console'] + (['file'] if not DEBUG else []),
+            'handlers': ['console'] + (['file'] if not DEBUG and not DOCKER_BUILD else []),
             'level': config('LOG_LEVEL', default='INFO'),
             'propagate': True,
         },
         'django.security': {
-            'handlers': ['console'] + (['security'] if not DEBUG else []),
+            'handlers': ['console'] + (['security'] if not DEBUG and not DOCKER_BUILD else []),
             'level': 'INFO',
             'propagate': False,
         },
         'django_ratelimit': {
-            'handlers': ['console'] + (['file'] if not DEBUG else []),
+            'handlers': ['console'] + (['file'] if not DEBUG and not DOCKER_BUILD else []),
             'level': 'WARNING',
             'propagate': False,
         },

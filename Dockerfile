@@ -5,6 +5,7 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=app.settings
+ENV DOCKER_BUILD=1
 
 # Set work directory
 WORKDIR /app
@@ -24,15 +25,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Create logs directory with proper permissions
-RUN mkdir -p /app/app/logs
+# Create a non-root user first
+RUN adduser --disabled-password --gecos '' appuser
 
-# Create a non-root user
-RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
+# Create directories with proper permissions
+RUN mkdir -p /app/app/logs /app/staticfiles /app/media && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
 USER appuser
 
 # Collect static files
 RUN python app/manage.py collectstatic --noinput
+
+# Remove build-time environment variable
+ENV DOCKER_BUILD=
 
 # Expose port
 EXPOSE 8000
