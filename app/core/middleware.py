@@ -69,7 +69,17 @@ class AccountLockoutMiddleware(MiddlewareMixin):
     """
     def process_request(self, request):
         if request.path == '/api/auth/login/' and request.method == 'POST':
-            username = request.POST.get('username') or request.data.get('username')
+            # Handle both form data and JSON data
+            username = request.POST.get('username')
+            if not username and hasattr(request, 'data'):
+                username = request.data.get('username')
+            if not username and request.content_type == 'application/json':
+                try:
+                    import json
+                    data = json.loads(request.body.decode('utf-8'))
+                    username = data.get('username')
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    pass
             if username:
                 try:
                     user = User.objects.get(username=username)
